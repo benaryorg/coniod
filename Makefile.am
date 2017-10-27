@@ -1,3 +1,6 @@
+SUBDIRS = src
+dist_doc_DATA = README COPYING NEWS AUTHORS ChangeLog
+
 ChangeLog: .git
 	git log --format="%ai%x09%an <%ae> %n%n%x09* %s%n%n" > $@
 
