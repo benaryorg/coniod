@@ -8,8 +8,6 @@ AC_CONFIG_HEADERS([src/config.h])
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_C99
-AC_PROG_CC_STDC
 
 # Checks for libraries.
 
@@ -17,9 +15,14 @@ AC_PROG_CC_STDC
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_PROG_CC_C99
+AC_PROG_CC_STDC
 
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
+
+CFLAGS+=' "-DCONIOD_DEFAULT_CONFIGFILE=\"$(sysconfdir)/coniod.conf\""'
+
 AC_OUTPUT
