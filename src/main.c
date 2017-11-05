@@ -1,56 +1,110 @@
+#include <err.h>
+#include <fcntl.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <getopt.h>
 
 #include "config.h"
-#include "header.h"
+#include "coniod.h"
 
 #ifndef CONIOD_DEFAULT_CONFIGFILE
 #define CONIOD_DEFAULT_CONFIGFILE "/etc/coniod.conf"
 #endif /** CONIOD_DEFAULT_CONFIGFILE **/
 
-int main(int argc, char **argv)
-{
-	int opt;
-	char *configfile=0;
+char *progname=0;
 
-	while((opt=getopt(argc,argv,"c:h")) != -1)
+void usage()
+{
+	printf("Usage: %s [OPTION]...\n",progname);
+	printf("%s",
+		"Start processes and connect them as specified in " PACKAGE_NAME " configfile." "\n"
+		"\n"
+		"  " "-h, --help" "    " "display this help and exit" "\n"
+		"  " "-V, --version" " " "output version information and exit" "\n"
+		"  " "-c, --config" "  " "configfile to use, default: " CONIOD_DEFAULT_CONFIGFILE "\n"
+	);
+}
+
+void version()
+{
+	printf("%s\n",PACKAGE_STRING);
+}
+
+int main(int argc,char **argv)
+{
+	progname=*argv;
+	int ch;
+	int configfile=-1;
+	int verbose=0;
+
+	struct option longopts[]=
+		{
+			{ "help"
+			, no_argument
+			, NULL
+			, 'h'
+			},
+			{ "version"
+			, no_argument
+			, NULL
+			, 'V'
+			},
+			{ "config"
+			, required_argument
+			, NULL
+			, 'c'
+			},
+			{ NULL
+			, 0
+			, NULL
+			, 0
+			},
+		};
+
+	while((ch=getopt_long(argc,argv,"hVc:",longopts,NULL)) != -1)
 	{
-		switch(opt)
+		switch(ch)
 		{
 			case 'c':
+				if((configfile=open(optarg,O_RDONLY,0)) == -1)
 				{
-					int len=strlen(optarg);
-					configfile=malloc(len+1);
-					if(!configfile)
-					{
-						perror("main: configfile malloc");
-					}
-					memcpy(configfile,optarg,len);
+					err(EXIT_FAILURE,"unable to open configfile %s",optarg);
 				}
 				break;
+			case 'V':
+				version();
+				exit(EXIT_SUCCESS);
+				break;
+			case 'h':
+				usage();
+				exit(EXIT_SUCCESS);
+				break;
 			default:
+				usage();
 				exit(EXIT_FAILURE);
+				break;
+			case 0:
 				break;
 		}
 	}
+	argc-=optind;
+	argv+=optind;
 
-	if(!configfile)
+	if(argc > 0)
 	{
-		int len=strlen(CONIOD_DEFAULT_CONFIGFILE);
-		configfile=malloc(len+1);
-		if(!configfile)
-		{
-			perror("main: configfile malloc");
-		}
-		memcpy(configfile,CONIOD_DEFAULT_CONFIGFILE,len);
+		warnx("additional %d arguments ignored",argc);
 	}
 
-	printf("configfile: %s\n",configfile);
+	if(configfile != -1)
+	{
+		if((configfile=open(CONIOD_DEFAULT_CONFIGFILE,O_RDONLY,0)) == -1)
+		{
+			err(EXIT_FAILURE,"unable to open default configfile %s",CONIOD_DEFAULT_CONFIGFILE);
+		}
+	}
 
-	free(configfile);
 	return 0;
 }
 
